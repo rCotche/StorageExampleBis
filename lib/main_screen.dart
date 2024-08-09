@@ -80,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
                         uploadTask = null;
                       });
                       final downloadUrl = await snapshot.ref.getDownloadURL();
-                      print("URL : $downloadUrl");
+                      print("URL : $downloadUrl"); //
                     },
                     child: const Text(
                       "upload",
