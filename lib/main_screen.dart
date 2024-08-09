@@ -12,7 +12,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  File? image;
+  XFile? image;
   UploadTask? uploadTask;
 
   @override
@@ -38,33 +38,87 @@ class _MainScreenState extends State<MainScreen> {
                 final picture =
                     await ImagePicker().pickImage(source: ImageSource.gallery);
                 if (picture != null) {
-                  image = File(picture.path);
+                  image = picture;
                   setState(() {});
                 }
               },
-              child: const Align(
-                alignment: Alignment.center,
-                child: CircleAvatar(
-                  radius: 100,
-                  child: Icon(
-                    Icons.camera_alt,
-                    size: 50,
-                  ),
-                ),
-              ),
+              child: image == null
+                  ? const Align(
+                      alignment: Alignment.center,
+                      child: CircleAvatar(
+                        radius: 100,
+                        child: Icon(
+                          Icons.camera_alt,
+                          size: 50,
+                        ),
+                      ),
+                    )
+                  : ClipOval(
+                      child: Image.file(
+                      File(image!.path),
+                      height: 200,
+                      width: 200,
+                      fit: BoxFit.cover,
+                    )),
             ),
             const SizedBox(
               height: 30,
             ),
-            ElevatedButton(
-              onPressed: () {},
-              child: const Text(
-                "upload",
-              ),
-            ),
+            uploadTask != null
+                ? buildProgress() as Widget
+                : ElevatedButton(
+                    onPressed: () async {
+                      final ref = FirebaseStorage.instance
+                          .ref()
+                          .child("images/${image!.name}");
+                      //upload
+                      uploadTask = ref.putFile(File(image!.path));
+                      setState(() {});
+                      final snapshot =
+                          await uploadTask!.whenComplete(() => null);
+                      setState(() {
+                        uploadTask = null;
+                      });
+                      final downloadUrl = await snapshot.ref.getDownloadURL();
+                      print("URL : $downloadUrl");
+                    },
+                    child: const Text(
+                      "upload",
+                    ),
+                  ),
           ],
         ),
       ),
     );
+  }
+
+  Widget? buildProgress() {
+    return StreamBuilder(
+        stream: uploadTask?.snapshotEvents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            final data = snapshot.data;
+            double progress = data!.bytesTransferred / data.totalBytes;
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  height: 100,
+                  width: 100,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 8,
+                    value: progress,
+                    color: Colors.green,
+                    backgroundColor: Colors.grey,
+                  ),
+                ),
+                Text(
+                  "${(progress * 100).roundToDouble()}%",
+                ),
+              ],
+            );
+          }
+          return const SizedBox.shrink();
+        });
   }
 }
