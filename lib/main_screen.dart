@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -80,7 +81,9 @@ class _MainScreenState extends State<MainScreen> {
                         uploadTask = null;
                       });
                       final downloadUrl = await snapshot.ref.getDownloadURL();
-                      print("URL : $downloadUrl");
+                      if (kDebugMode) {
+                        print("URL : $downloadUrl");
+                      }
                     },
                     child: const Text(
                       "upload",
